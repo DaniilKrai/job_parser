@@ -2,6 +2,7 @@ package org.example.app;
 
 import org.example.domain.Salary;
 import org.example.domain.Vacancy;
+import org.example.repository.VacancyRepository;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -10,7 +11,11 @@ import java.util.Scanner;
 
 public class ConsoleApplication {
     private final Scanner scanner = new Scanner(System.in);
-    private final List<Vacancy> vacancies = new ArrayList<>();
+    private final VacancyRepository vacancyRepository;
+
+    public ConsoleApplication(VacancyRepository vacancyRepository) {
+        this.vacancyRepository = vacancyRepository;
+    }
 
     public void run () {
         System.out.println("Job Parser запущен");
@@ -46,40 +51,45 @@ public class ConsoleApplication {
     }
 
     private void addDemoVacancies() {
-        vacancies.add(new Vacancy(
-                "Java Developer",
-                "Example Company",
-                "Москва",
-                new Salary(150000, 250000, "RUB"),
-                "Разработка backend-сервисов на Java",
-                "https://example.com/vacancies/developer",
-                LocalDate.now()
-        ));
+        List<Vacancy> demoVacancies = List.of(
+                new Vacancy(
+                        "Java Developer",
+                        "Example Company",
+                        "Москва",
+                        new Salary(150000, 250000, "RUB"),
+                        "Разработка backend-сервисов на Java",
+                        "https://example.com/vacancies/developer",
+                        LocalDate.now()
+                ),
 
-        vacancies.add(new Vacancy(
-                "QA Engineer",
-                "Demo Tech",
-                "Питер",
-                new Salary(90000, 140000, "RUB"),
-                "Тестирование web-приложений",
-                "https://example.com/vacancies/engineer",
-                LocalDate.now()
-        ));
+                new Vacancy(
+                        "QA Engineer",
+                        "Demo Tech",
+                        "Питер",
+                        new Salary(90000, 140000, "RUB"),
+                        "Тестирование web-приложений",
+                        "https://example.com/vacancies/engineer",
+                        LocalDate.now()
+                ),
 
-        vacancies.add(new Vacancy(
-                "Frontend Developer",
-                "Web Studio",
-                "Удалённо",
-                new Salary(120000, 200000, "RUB"),
-                "Разработка пользовательских интерфейсов",
-                "https://example.com/vacancies/frontend-developer",
-                LocalDate.now()
-        ));
+                new Vacancy(
+                        "Frontend Developer",
+                        "Web Studio",
+                        "Удалённо",
+                        new Salary(120000, 200000, "RUB"),
+                        "Разработка пользовательских интерфейсов",
+                        "https://example.com/vacancies/frontend-developer",
+                        LocalDate.now()
+                )
+                );
+
+        vacancyRepository.saveAll(demoVacancies);
 
         System.out.println("Демо-вакансии добавлены");
     }
 
     private void printVacancies() {
+        List<Vacancy> vacancies = vacancyRepository.findAll();
         if (vacancies.isEmpty()) {
             System.out.println("Список вакансий пуст");
             return;
