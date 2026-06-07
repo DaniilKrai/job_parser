@@ -15,6 +15,7 @@ import org.example.repository.JdbcFetchHistoryRepository;
 import org.example.repository.JdbcVacancyRepository;
 import org.example.repository.VacancyRepository;
 import org.example.service.AlertService;
+import org.example.service.AutoFetchService;
 import org.example.service.ExportService;
 import org.example.service.VacancyFetchService;
 import org.example.service.VacancySearchService;
@@ -53,6 +54,8 @@ public class Main {
                 parsers
         );
 
+        AutoFetchService autoFetchService = new AutoFetchService(vacancyFetchService);
+
         List<VacancyExporter> exporters = List.of(
                 new CsvVacancyExporter(),
                 new JsonVacancyExporter()
@@ -70,7 +73,8 @@ public class Main {
                 fetchHistoryRepository,
                 vacancyStatisticsService,
                 exportService,
-                alertService
+                alertService,
+                autoFetchService
         );
 
         application.run();

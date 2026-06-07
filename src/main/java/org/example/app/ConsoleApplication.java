@@ -8,6 +8,7 @@ import org.example.domain.Vacancy;
 import org.example.repository.FetchHistoryRepository;
 import org.example.repository.VacancyRepository;
 import org.example.service.AlertService;
+import org.example.service.AutoFetchService;
 import org.example.service.ExportService;
 import org.example.service.VacancyFetchService;
 import org.example.service.VacancySearchService;
@@ -27,6 +28,7 @@ public class ConsoleApplication {
     private final VacancyStatisticsService vacancyStatisticsService;
     private final ExportService exportService;
     private final AlertService alertService;
+    private final AutoFetchService autoFetchService;
 
     public ConsoleApplication(
             VacancyRepository vacancyRepository,
@@ -35,7 +37,8 @@ public class ConsoleApplication {
             FetchHistoryRepository fetchHistoryRepository,
             VacancyStatisticsService vacancyStatisticsService,
             ExportService exportService,
-            AlertService alertService
+            AlertService alertService,
+            AutoFetchService autoFetchService
     ) {
         this.vacancyRepository = vacancyRepository;
         this.vacancySearchService = vacancySearchService;
@@ -44,6 +47,7 @@ public class ConsoleApplication {
         this.vacancyStatisticsService = vacancyStatisticsService;
         this.exportService = exportService;
         this.alertService = alertService;
+        this.autoFetchService = autoFetchService;
     }
 
     public void run() {
@@ -62,6 +66,10 @@ public class ConsoleApplication {
                 addDemoVacancies();
             } else if (input.equals("fetch")) {
                 fetchVacancies();
+            } else if (input.startsWith("auto-fetch ")) {
+                startAutoFetch(input);
+            } else if (input.equals("auto-fetch-stop")) {
+                stopAutoFetch();
             } else if (input.equals("history")) {
                 printFetchHistory();
             } else if (input.startsWith("stats")) {
@@ -77,6 +85,7 @@ public class ConsoleApplication {
             } else if (input.startsWith("filter ")) {
                 filterVacancies(input);
             } else if (input.equals("exit")) {
+                autoFetchService.stop();
                 running = false;
             } else if (input.isBlank()) {
                 System.out.println("Введите команду");
@@ -93,6 +102,8 @@ public class ConsoleApplication {
         System.out.println("help - показать список команд");
         System.out.println("add-demo - добавить демо-вакансии");
         System.out.println("fetch - загрузить вакансии из источников");
+        System.out.println("auto-fetch <seconds> - включить автообновление вакансий");
+        System.out.println("auto-fetch-stop - остановить автообновление");
         System.out.println("history - показать историю загрузок");
         System.out.println("list - показать список вакансий");
         System.out.println("search <слово> - найти вакансии по слову");
@@ -162,6 +173,39 @@ public class ConsoleApplication {
         int totalAdded = vacancyFetchService.fetchAll();
 
         System.out.println("Всего новых вакансий добавлено: " + totalAdded);
+    }
+
+    private void startAutoFetch(String input) {
+        String[] parts = input.split("\\s+");
+
+        if (parts.length < 2) {
+            System.out.println("Неверный формат команды");
+            System.out.println("Пример: auto-fetch 60");
+            return;
+        }
+
+        try {
+            long intervalSeconds = Long.parseLong(parts[1]);
+
+            autoFetchService.start(intervalSeconds);
+
+            System.out.println("Автообновление включено каждые " + intervalSeconds + " секунд");
+        } catch (NumberFormatException exception) {
+            System.out.println("Интервал должен быть числом");
+        } catch (Exception exception) {
+            System.out.println("Не удалось включить автообновление: " + exception.getMessage());
+        }
+    }
+
+    private void stopAutoFetch() {
+        if (!autoFetchService.isRunning()) {
+            System.out.println("Автообновление не запущено");
+            return;
+        }
+
+        autoFetchService.stop();
+
+        System.out.println("Автообновление остановлено");
     }
 
     private void printFetchHistory() {
