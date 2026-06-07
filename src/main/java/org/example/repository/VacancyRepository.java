@@ -3,9 +3,9 @@ import org.example.domain.Vacancy;
 import java.util.List;
 
 public interface VacancyRepository {
-    void save(Vacancy vacancy);
+    boolean save(Vacancy vacancy);
 
-    void saveAll(List<Vacancy> vacancies);
+    int saveAll(List<Vacancy> vacancies);
 
     List<Vacancy> findAll();
 }

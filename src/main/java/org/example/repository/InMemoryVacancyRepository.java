@@ -9,17 +9,33 @@ public class InMemoryVacancyRepository implements VacancyRepository {
     private final List<Vacancy> vacancies = new ArrayList<>();
 
     @Override
-    public void save(Vacancy vacancy) {
+    public boolean save(Vacancy vacancy) {
+        if (existsBySourceUrl(vacancy.getSourceUrl())) {
+            return false;
+        }
+
         vacancies.add(vacancy);
+        return true;
     }
 
     @Override
-    public void saveAll(List<Vacancy> vacancies) {
-        this.vacancies.addAll(vacancies);
+    public int saveAll(List<Vacancy> vacancies) {
+        int addedCount= 0;
+        for (Vacancy vacancy : vacancies) {
+            if (save(vacancy)) {
+                ++addedCount;
+            }
+        }
+        return addedCount;
     }
 
     @Override
     public List<Vacancy> findAll() {
         return new ArrayList<>(vacancies);
+    }
+
+    private boolean existsBySourceUrl(String sourceUrl) {
+        return vacancies.stream()
+                .anyMatch(vacancy -> vacancy.getSourceUrl().equals(sourceUrl));
     }
 }

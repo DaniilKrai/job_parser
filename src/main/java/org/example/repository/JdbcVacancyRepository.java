@@ -19,9 +19,9 @@ public class JdbcVacancyRepository implements VacancyRepository {
     }
 
     @Override
-    public void save(Vacancy vacancy) {
+    public boolean save(Vacancy vacancy) {
         if (existsBySourceUrl(vacancy.getSourceUrl())) {
-            return;
+            return false;
         }
 
         String sql = """
@@ -66,16 +66,21 @@ public class JdbcVacancyRepository implements VacancyRepository {
             statement.setDate(9, Date.valueOf(vacancy.getPublishedAt()));
 
             statement.executeUpdate();
+            return true;
         } catch (Exception exception) {
             throw new RuntimeException("Не удалось сохранить вакансию", exception);
         }
     }
 
     @Override
-    public void saveAll(List<Vacancy> vacancies) {
+    public int saveAll(List<Vacancy> vacancies) {
+        int addedCount = 0;
         for (Vacancy vacancy : vacancies) {
-            save(vacancy);
+            if (save(vacancy)) {
+                ++addedCount;
+            }
         }
+        return addedCount;
     }
 
     @Override

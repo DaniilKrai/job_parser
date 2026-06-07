@@ -5,6 +5,7 @@ import org.example.domain.SearchCriteria;
 import org.example.domain.Vacancy;
 import org.example.repository.VacancyRepository;
 import org.example.service.VacancySearchService;
+import org.example.service.VacancyFetchService;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -14,10 +15,12 @@ public class ConsoleApplication {
     private final Scanner scanner = new Scanner(System.in);
     private final VacancyRepository vacancyRepository;
     private final VacancySearchService vacancySearchService;
+    private final VacancyFetchService vacancyFetchService;
 
-    public ConsoleApplication(VacancyRepository vacancyRepository, VacancySearchService vacancySearchService) {
+    public ConsoleApplication(VacancyRepository vacancyRepository, VacancySearchService vacancySearchService, VacancyFetchService vacancyFetchService) {
         this.vacancyRepository = vacancyRepository;
         this.vacancySearchService = vacancySearchService;
+        this.vacancyFetchService = vacancyFetchService;
     }
 
     public void run() {
@@ -40,6 +43,8 @@ public class ConsoleApplication {
                 searchByKeyword(input);
             } else if (input.startsWith("filter ")) {
                 filterVacancies(input);
+            } else if (input.equals("fetch")) {
+                fetchVacancies();
             } else if (input.equals("exit")) {
                 running = false;
             } else if (input.isBlank()) {
@@ -61,6 +66,7 @@ public class ConsoleApplication {
         System.out.println("filter city <город> - фильтр по городу");
         System.out.println("filter company <компания> - фильтр по компании");
         System.out.println("filter salary <сумма> - фильтр по минимальной зарплате");
+        System.out.println("fetch - загрузить вакансии из источников");
         System.out.println("exit - завершить");
     }
 
@@ -107,9 +113,8 @@ public class ConsoleApplication {
                 )
         );
 
-        vacancyRepository.saveAll(demoVacancies);
-
-        System.out.println("Демо-вакансии добавлены");
+        int addedCount = vacancyRepository.saveAll(demoVacancies);
+        System.out.println("Добавлено " + addedCount + " вакансий");
     }
 
     private void searchByKeyword(String input) {
@@ -176,5 +181,10 @@ public class ConsoleApplication {
             Vacancy vacancy = vacancies.get(i);
             System.out.println((i + 1) + ". " + vacancy);
         }
+    }
+
+    private void fetchVacancies() {
+        int totalAdded = vacancyFetchService.fetchAll();
+        System.out.println("всего новых вакансий добавлено:");
     }
 }
