@@ -5,6 +5,8 @@ import org.example.db.ConnectionFactory;
 import org.example.db.DatabaseInitializer;
 import org.example.parser.DemoVacancyParser;
 import org.example.parser.VacancySourceParser;
+import org.example.repository.FetchHistoryRepository;
+import org.example.repository.JdbcFetchHistoryRepository;
 import org.example.repository.JdbcVacancyRepository;
 import org.example.repository.VacancyRepository;
 import org.example.service.VacancyFetchService;
@@ -20,6 +22,7 @@ public class Main {
         databaseInitializer.initialize();
 
         VacancyRepository vacancyRepository = new JdbcVacancyRepository(connectionFactory);
+        FetchHistoryRepository fetchHistoryRepository = new JdbcFetchHistoryRepository(connectionFactory);
 
         VacancySearchService vacancySearchService = new VacancySearchService(vacancyRepository);
 
@@ -29,13 +32,15 @@ public class Main {
 
         VacancyFetchService vacancyFetchService = new VacancyFetchService(
                 vacancyRepository,
+                fetchHistoryRepository,
                 parsers
         );
 
         ConsoleApplication application = new ConsoleApplication(
                 vacancyRepository,
                 vacancySearchService,
-                vacancyFetchService
+                vacancyFetchService,
+                fetchHistoryRepository
         );
 
         application.run();

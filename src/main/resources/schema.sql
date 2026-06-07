@@ -10,3 +10,14 @@ CREATE TABLE IF NOT EXISTS vacancies (
     source_url VARCHAR(1000) NOT NULL UNIQUE,
     published_at DATE
 );
+
+CREATE TABLE IF NOT EXISTS fetch_history (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    source_name VARCHAR(255) NOT NULL,
+    started_at TIMESTAMP NOT NULL,
+    finished_at TIMESTAMP NOT NULL,
+    received_count INT NOT NULL,
+    added_count INT NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    message VARCHAR(1000)
+    );

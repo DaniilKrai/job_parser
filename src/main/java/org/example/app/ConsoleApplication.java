@@ -6,6 +6,8 @@ import org.example.domain.Vacancy;
 import org.example.repository.VacancyRepository;
 import org.example.service.VacancySearchService;
 import org.example.service.VacancyFetchService;
+import org.example.domain.FetchHistory;
+import org.example.repository.FetchHistoryRepository;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -16,11 +18,18 @@ public class ConsoleApplication {
     private final VacancyRepository vacancyRepository;
     private final VacancySearchService vacancySearchService;
     private final VacancyFetchService vacancyFetchService;
+    private final FetchHistoryRepository fetchHistoryRepository;
 
-    public ConsoleApplication(VacancyRepository vacancyRepository, VacancySearchService vacancySearchService, VacancyFetchService vacancyFetchService) {
+    public ConsoleApplication(
+            VacancyRepository vacancyRepository,
+            VacancySearchService vacancySearchService,
+            VacancyFetchService vacancyFetchService,
+            FetchHistoryRepository fetchHistoryRepository
+    ) {
         this.vacancyRepository = vacancyRepository;
         this.vacancySearchService = vacancySearchService;
         this.vacancyFetchService = vacancyFetchService;
+        this.fetchHistoryRepository = fetchHistoryRepository;
     }
 
     public void run() {
@@ -45,6 +54,8 @@ public class ConsoleApplication {
                 filterVacancies(input);
             } else if (input.equals("fetch")) {
                 fetchVacancies();
+            } else if (input.equals("history")) {
+                printFetchHistory();
             } else if (input.equals("exit")) {
                 running = false;
             } else if (input.isBlank()) {
@@ -67,6 +78,7 @@ public class ConsoleApplication {
         System.out.println("filter company <компания> - фильтр по компании");
         System.out.println("filter salary <сумма> - фильтр по минимальной зарплате");
         System.out.println("fetch - загрузить вакансии из источников");
+        System.out.println("history - показать историю загрузок");
         System.out.println("exit - завершить");
     }
 
@@ -186,5 +198,20 @@ public class ConsoleApplication {
     private void fetchVacancies() {
         int totalAdded = vacancyFetchService.fetchAll();
         System.out.println("всего новых вакансий добавлено:");
+    }
+
+    private void printFetchHistory() {
+        List<FetchHistory> history = fetchHistoryRepository.findAll();
+
+        if (history.isEmpty()) {
+            System.out.println("История фетчей пустая");
+            return;
+        }
+
+        System.out.println("История фетчей:");
+
+        for (FetchHistory item : history) {
+            System.out.println(item);
+        }
     }
 }
