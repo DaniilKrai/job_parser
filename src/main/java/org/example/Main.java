@@ -3,6 +3,8 @@ package org.example;
 import org.example.app.ConsoleApplication;
 import org.example.db.ConnectionFactory;
 import org.example.db.DatabaseInitializer;
+import org.example.exporter.CsvVacancyExporter;
+import org.example.exporter.VacancyExporter;
 import org.example.parser.DemoVacancyParser;
 import org.example.parser.HabrCareerVacancyParser;
 import org.example.parser.VacancySourceParser;
@@ -10,9 +12,11 @@ import org.example.repository.FetchHistoryRepository;
 import org.example.repository.JdbcFetchHistoryRepository;
 import org.example.repository.JdbcVacancyRepository;
 import org.example.repository.VacancyRepository;
+import org.example.service.ExportService;
 import org.example.service.VacancyFetchService;
 import org.example.service.VacancySearchService;
 import org.example.service.VacancyStatisticsService;
+import org.example.exporter.JsonVacancyExporter;
 
 import java.util.List;
 
@@ -40,12 +44,23 @@ public class Main {
                 parsers
         );
 
+        List<VacancyExporter> exporters = List.of(
+                new CsvVacancyExporter(),
+                new JsonVacancyExporter()
+        );
+
+        ExportService exportService = new ExportService(
+                vacancyRepository,
+                exporters
+        );
+
         ConsoleApplication application = new ConsoleApplication(
                 vacancyRepository,
                 vacancySearchService,
                 vacancyFetchService,
                 fetchHistoryRepository,
-                vacancyStatisticsService
+                vacancyStatisticsService,
+                exportService
         );
 
         application.run();

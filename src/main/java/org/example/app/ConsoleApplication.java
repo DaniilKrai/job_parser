@@ -1,18 +1,19 @@
 package org.example.app;
 
+import org.example.domain.FetchHistory;
 import org.example.domain.Salary;
 import org.example.domain.SearchCriteria;
 import org.example.domain.Vacancy;
-import org.example.repository.VacancyRepository;
-import org.example.service.VacancySearchService;
-import org.example.service.VacancyFetchService;
-import org.example.domain.FetchHistory;
 import org.example.repository.FetchHistoryRepository;
+import org.example.repository.VacancyRepository;
+import org.example.service.ExportService;
+import org.example.service.VacancyFetchService;
+import org.example.service.VacancySearchService;
 import org.example.service.VacancyStatisticsService;
-import java.util.Map;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class ConsoleApplication {
@@ -22,19 +23,22 @@ public class ConsoleApplication {
     private final VacancyFetchService vacancyFetchService;
     private final FetchHistoryRepository fetchHistoryRepository;
     private final VacancyStatisticsService vacancyStatisticsService;
+    private final ExportService exportService;
 
     public ConsoleApplication(
             VacancyRepository vacancyRepository,
             VacancySearchService vacancySearchService,
             VacancyFetchService vacancyFetchService,
             FetchHistoryRepository fetchHistoryRepository,
-            VacancyStatisticsService vacancyStatisticsService
+            VacancyStatisticsService vacancyStatisticsService,
+            ExportService exportService
     ) {
         this.vacancyRepository = vacancyRepository;
         this.vacancySearchService = vacancySearchService;
         this.vacancyFetchService = vacancyFetchService;
         this.fetchHistoryRepository = fetchHistoryRepository;
         this.vacancyStatisticsService = vacancyStatisticsService;
+        this.exportService = exportService;
     }
 
     public void run() {
@@ -51,18 +55,20 @@ public class ConsoleApplication {
                 printHelp();
             } else if (input.equals("add-demo")) {
                 addDemoVacancies();
-            } else if (input.equals("list")) {
-                printVacancies(vacancyRepository.findAll());
-            } else if (input.startsWith("search ")) {
-                searchByKeyword(input);
-            } else if (input.startsWith("filter ")) {
-                filterVacancies(input);
             } else if (input.equals("fetch")) {
                 fetchVacancies();
             } else if (input.equals("history")) {
                 printFetchHistory();
             } else if (input.startsWith("stats")) {
                 printStats(input);
+            } else if (input.startsWith("export ")) {
+                exportVacancies(input);
+            } else if (input.equals("list")) {
+                printVacancies(vacancyRepository.findAll());
+            } else if (input.startsWith("search ")) {
+                searchByKeyword(input);
+            } else if (input.startsWith("filter ")) {
+                filterVacancies(input);
             } else if (input.equals("exit")) {
                 running = false;
             } else if (input.isBlank()) {
@@ -79,16 +85,18 @@ public class ConsoleApplication {
         System.out.println("Доступные команды:");
         System.out.println("help - показать список команд");
         System.out.println("add-demo - добавить демо-вакансии");
+        System.out.println("fetch - загрузить вакансии из источников");
+        System.out.println("history - показать историю загрузок");
         System.out.println("list - показать список вакансий");
         System.out.println("search <слово> - найти вакансии по слову");
         System.out.println("filter city <город> - фильтр по городу");
         System.out.println("filter company <компания> - фильтр по компании");
         System.out.println("filter salary <сумма> - фильтр по минимальной зарплате");
-        System.out.println("fetch - загрузить вакансии из источников");
-        System.out.println("history - показать историю загрузок");
         System.out.println("stats cities - статистика по городам");
         System.out.println("stats companies - статистика по компаниям");
         System.out.println("stats salary - статистика по зарплатам");
+        System.out.println("export csv <file> - экспортировать вакансии в CSV");
+        System.out.println("export json <file> - экспортировать вакансии в JSON");
         System.out.println("exit - завершить");
     }
 
@@ -136,7 +144,29 @@ public class ConsoleApplication {
         );
 
         int addedCount = vacancyRepository.saveAll(demoVacancies);
-        System.out.println("Добавлено " + addedCount + " вакансий");
+
+        System.out.println("Добавлено новых вакансий: " + addedCount);
+    }
+
+    private void fetchVacancies() {
+        int totalAdded = vacancyFetchService.fetchAll();
+
+        System.out.println("Всего новых вакансий добавлено: " + totalAdded);
+    }
+
+    private void printFetchHistory() {
+        List<FetchHistory> history = fetchHistoryRepository.findAll();
+
+        if (history.isEmpty()) {
+            System.out.println("История загрузок пустая");
+            return;
+        }
+
+        System.out.println("История загрузок:");
+
+        for (FetchHistory item : history) {
+            System.out.println(item);
+        }
     }
 
     private void searchByKeyword(String input) {
@@ -191,40 +221,6 @@ public class ConsoleApplication {
         }
     }
 
-    private void printVacancies(List<Vacancy> vacancies) {
-        if (vacancies.isEmpty()) {
-            System.out.println("Вакансии не найдены");
-            return;
-        }
-
-        System.out.println("Список вакансий:");
-
-        for (int i = 0; i < vacancies.size(); i++) {
-            Vacancy vacancy = vacancies.get(i);
-            System.out.println((i + 1) + ". " + vacancy);
-        }
-    }
-
-    private void fetchVacancies() {
-        int totalAdded = vacancyFetchService.fetchAll();
-        System.out.println("всего новых вакансий добавлено: " + totalAdded);
-    }
-
-    private void printFetchHistory() {
-        List<FetchHistory> history = fetchHistoryRepository.findAll();
-
-        if (history.isEmpty()) {
-            System.out.println("История фетчей пустая");
-            return;
-        }
-
-        System.out.println("История фетчей:");
-
-        for (FetchHistory item : history) {
-            System.out.println(item);
-        }
-    }
-
     private void printStats(String input) {
         if (input.equals("stats cities")) {
             printMapStatistics("Количество вакансий по городам:", vacancyStatisticsService.countByCity());
@@ -269,5 +265,39 @@ public class ConsoleApplication {
         System.out.println("Топ вакансий по зарплате:");
 
         printVacancies(topSalaryVacancies);
+    }
+
+    private void exportVacancies(String input) {
+        String[] parts = input.split("\\s+", 3);
+
+        if (parts.length < 3) {
+            System.out.println("Неверный формат команды");
+            System.out.println("Пример: export csv vacancies.csv");
+            return;
+        }
+
+        String format = parts[1];
+        String fileName = parts[2];
+
+        try {
+            exportService.export(format, fileName);
+            System.out.println("Экспорт завершён: " + fileName);
+        } catch (Exception exception) {
+            System.out.println("Ошибка экспорта: " + exception.getMessage());
+        }
+    }
+
+    private void printVacancies(List<Vacancy> vacancies) {
+        if (vacancies.isEmpty()) {
+            System.out.println("Вакансии не найдены");
+            return;
+        }
+
+        System.out.println("Список вакансий:");
+
+        for (int i = 0; i < vacancies.size(); i++) {
+            Vacancy vacancy = vacancies.get(i);
+            System.out.println((i + 1) + ". " + vacancy);
+        }
     }
 }
