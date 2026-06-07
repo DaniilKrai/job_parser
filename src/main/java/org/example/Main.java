@@ -4,6 +4,7 @@ import org.example.app.ConsoleApplication;
 import org.example.db.ConnectionFactory;
 import org.example.db.DatabaseInitializer;
 import org.example.parser.DemoVacancyParser;
+import org.example.parser.HabrCareerVacancyParser;
 import org.example.parser.VacancySourceParser;
 import org.example.repository.FetchHistoryRepository;
 import org.example.repository.JdbcFetchHistoryRepository;
@@ -11,6 +12,7 @@ import org.example.repository.JdbcVacancyRepository;
 import org.example.repository.VacancyRepository;
 import org.example.service.VacancyFetchService;
 import org.example.service.VacancySearchService;
+import org.example.service.VacancyStatisticsService;
 
 import java.util.List;
 
@@ -25,9 +27,11 @@ public class Main {
         FetchHistoryRepository fetchHistoryRepository = new JdbcFetchHistoryRepository(connectionFactory);
 
         VacancySearchService vacancySearchService = new VacancySearchService(vacancyRepository);
+        VacancyStatisticsService vacancyStatisticsService = new VacancyStatisticsService(vacancyRepository);
 
         List<VacancySourceParser> parsers = List.of(
-                new DemoVacancyParser()
+                new DemoVacancyParser(),
+                new HabrCareerVacancyParser()
         );
 
         VacancyFetchService vacancyFetchService = new VacancyFetchService(
@@ -40,7 +44,8 @@ public class Main {
                 vacancyRepository,
                 vacancySearchService,
                 vacancyFetchService,
-                fetchHistoryRepository
+                fetchHistoryRepository,
+                vacancyStatisticsService
         );
 
         application.run();

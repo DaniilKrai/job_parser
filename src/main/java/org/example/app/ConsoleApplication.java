@@ -8,6 +8,8 @@ import org.example.service.VacancySearchService;
 import org.example.service.VacancyFetchService;
 import org.example.domain.FetchHistory;
 import org.example.repository.FetchHistoryRepository;
+import org.example.service.VacancyStatisticsService;
+import java.util.Map;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -19,17 +21,20 @@ public class ConsoleApplication {
     private final VacancySearchService vacancySearchService;
     private final VacancyFetchService vacancyFetchService;
     private final FetchHistoryRepository fetchHistoryRepository;
+    private final VacancyStatisticsService vacancyStatisticsService;
 
     public ConsoleApplication(
             VacancyRepository vacancyRepository,
             VacancySearchService vacancySearchService,
             VacancyFetchService vacancyFetchService,
-            FetchHistoryRepository fetchHistoryRepository
+            FetchHistoryRepository fetchHistoryRepository,
+            VacancyStatisticsService vacancyStatisticsService
     ) {
         this.vacancyRepository = vacancyRepository;
         this.vacancySearchService = vacancySearchService;
         this.vacancyFetchService = vacancyFetchService;
         this.fetchHistoryRepository = fetchHistoryRepository;
+        this.vacancyStatisticsService = vacancyStatisticsService;
     }
 
     public void run() {
@@ -56,6 +61,8 @@ public class ConsoleApplication {
                 fetchVacancies();
             } else if (input.equals("history")) {
                 printFetchHistory();
+            } else if (input.startsWith("stats")) {
+                printStats(input);
             } else if (input.equals("exit")) {
                 running = false;
             } else if (input.isBlank()) {
@@ -79,6 +86,9 @@ public class ConsoleApplication {
         System.out.println("filter salary <сумма> - фильтр по минимальной зарплате");
         System.out.println("fetch - загрузить вакансии из источников");
         System.out.println("history - показать историю загрузок");
+        System.out.println("stats cities - статистика по городам");
+        System.out.println("stats companies - статистика по компаниям");
+        System.out.println("stats salary - статистика по зарплатам");
         System.out.println("exit - завершить");
     }
 
@@ -197,7 +207,7 @@ public class ConsoleApplication {
 
     private void fetchVacancies() {
         int totalAdded = vacancyFetchService.fetchAll();
-        System.out.println("всего новых вакансий добавлено:");
+        System.out.println("всего новых вакансий добавлено: " + totalAdded);
     }
 
     private void printFetchHistory() {
@@ -213,5 +223,51 @@ public class ConsoleApplication {
         for (FetchHistory item : history) {
             System.out.println(item);
         }
+    }
+
+    private void printStats(String input) {
+        if (input.equals("stats cities")) {
+            printMapStatistics("Количество вакансий по городам:", vacancyStatisticsService.countByCity());
+        } else if (input.equals("stats companies")) {
+            printMapStatistics("Количество вакансий по компаниям:", vacancyStatisticsService.countByCompany());
+        } else if (input.equals("stats salary")) {
+            printSalaryStatistics();
+        } else {
+            System.out.println("Неизвестная команда статистики");
+            System.out.println("Доступные команды:");
+            System.out.println("stats cities");
+            System.out.println("stats companies");
+            System.out.println("stats salary");
+        }
+    }
+
+    private void printMapStatistics(String title, Map<String, Long> statistics) {
+        if (statistics.isEmpty()) {
+            System.out.println("Нет данных для статистики");
+            return;
+        }
+
+        System.out.println(title);
+
+        Map<String, Long> sortedStatistics = vacancyStatisticsService.sortByValueDesc(statistics);
+
+        for (Map.Entry<String, Long> entry : sortedStatistics.entrySet()) {
+            System.out.println(entry.getKey() + ": " + entry.getValue());
+        }
+    }
+
+    private void printSalaryStatistics() {
+        double averageSalary = vacancyStatisticsService.averageSalary();
+        List<Vacancy> topSalaryVacancies = vacancyStatisticsService.topBySalary(5);
+
+        if (averageSalary == 0 && topSalaryVacancies.isEmpty()) {
+            System.out.println("Нет данных по зарплатам");
+            return;
+        }
+
+        System.out.println("Средняя зарплата: " + Math.round(averageSalary) + " RUB");
+        System.out.println("Топ вакансий по зарплате:");
+
+        printVacancies(topSalaryVacancies);
     }
 }
