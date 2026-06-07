@@ -1,11 +1,13 @@
 package org.example.app;
 
+import org.example.domain.Alert;
 import org.example.domain.FetchHistory;
 import org.example.domain.Salary;
 import org.example.domain.SearchCriteria;
 import org.example.domain.Vacancy;
 import org.example.repository.FetchHistoryRepository;
 import org.example.repository.VacancyRepository;
+import org.example.service.AlertService;
 import org.example.service.ExportService;
 import org.example.service.VacancyFetchService;
 import org.example.service.VacancySearchService;
@@ -24,6 +26,7 @@ public class ConsoleApplication {
     private final FetchHistoryRepository fetchHistoryRepository;
     private final VacancyStatisticsService vacancyStatisticsService;
     private final ExportService exportService;
+    private final AlertService alertService;
 
     public ConsoleApplication(
             VacancyRepository vacancyRepository,
@@ -31,7 +34,8 @@ public class ConsoleApplication {
             VacancyFetchService vacancyFetchService,
             FetchHistoryRepository fetchHistoryRepository,
             VacancyStatisticsService vacancyStatisticsService,
-            ExportService exportService
+            ExportService exportService,
+            AlertService alertService
     ) {
         this.vacancyRepository = vacancyRepository;
         this.vacancySearchService = vacancySearchService;
@@ -39,6 +43,7 @@ public class ConsoleApplication {
         this.fetchHistoryRepository = fetchHistoryRepository;
         this.vacancyStatisticsService = vacancyStatisticsService;
         this.exportService = exportService;
+        this.alertService = alertService;
     }
 
     public void run() {
@@ -63,6 +68,8 @@ public class ConsoleApplication {
                 printStats(input);
             } else if (input.startsWith("export ")) {
                 exportVacancies(input);
+            } else if (input.startsWith("alert ")) {
+                handleAlertCommand(input);
             } else if (input.equals("list")) {
                 printVacancies(vacancyRepository.findAll());
             } else if (input.startsWith("search ")) {
@@ -97,6 +104,9 @@ public class ConsoleApplication {
         System.out.println("stats salary - статистика по зарплатам");
         System.out.println("export csv <file> - экспортировать вакансии в CSV");
         System.out.println("export json <file> - экспортировать вакансии в JSON");
+        System.out.println("alert add <keyword> <city> <salary> - добавить уведомление");
+        System.out.println("alert list - показать уведомления");
+        System.out.println("alert check - проверить уведомления");
         System.out.println("exit - завершить");
     }
 
@@ -284,6 +294,83 @@ public class ConsoleApplication {
             System.out.println("Экспорт завершён: " + fileName);
         } catch (Exception exception) {
             System.out.println("Ошибка экспорта: " + exception.getMessage());
+        }
+    }
+
+    private void handleAlertCommand(String input) {
+        if (input.equals("alert list")) {
+            printAlerts();
+        } else if (input.equals("alert check")) {
+            checkAlerts();
+        } else if (input.startsWith("alert add ")) {
+            addAlert(input);
+        } else {
+            System.out.println("Неизвестная команда уведомлений");
+            System.out.println("Примеры:");
+            System.out.println("alert add Java Москва 150000");
+            System.out.println("alert list");
+            System.out.println("alert check");
+        }
+    }
+
+    private void addAlert(String input) {
+        String[] parts = input.split("\\s+", 5);
+
+        if (parts.length < 5) {
+            System.out.println("Неверный формат команды");
+            System.out.println("Пример: alert add Java Москва 150000");
+            return;
+        }
+
+        String keyword = parts[2];
+        String city = parts[3];
+
+        try {
+            Integer minSalary = Integer.parseInt(parts[4]);
+
+            alertService.addAlert(keyword, city, minSalary);
+
+            System.out.println("Уведомление добавлено");
+        } catch (NumberFormatException exception) {
+            System.out.println("Зарплата должна быть числом");
+        }
+    }
+
+    private void printAlerts() {
+        List<Alert> alerts = alertService.findAll();
+
+        if (alerts.isEmpty()) {
+            System.out.println("Уведомлений пока нет");
+            return;
+        }
+
+        System.out.println("Список уведомлений:");
+
+        for (Alert alert : alerts) {
+            System.out.println(alert);
+        }
+    }
+
+    private void checkAlerts() {
+        Map<Alert, List<Vacancy>> result = alertService.checkAlerts();
+
+        if (result.isEmpty()) {
+            System.out.println("Уведомлений пока нет");
+            return;
+        }
+
+        for (Map.Entry<Alert, List<Vacancy>> entry : result.entrySet()) {
+            Alert alert = entry.getKey();
+            List<Vacancy> vacancies = entry.getValue();
+
+            System.out.println("Уведомление: " + alert);
+
+            if (vacancies.isEmpty()) {
+                System.out.println("Подходящих вакансий не найдено");
+            } else {
+                System.out.println("Найдено подходящих вакансий: " + vacancies.size());
+                printVacancies(vacancies);
+            }
         }
     }
 

@@ -8,10 +8,13 @@ import org.example.exporter.VacancyExporter;
 import org.example.parser.DemoVacancyParser;
 import org.example.parser.HabrCareerVacancyParser;
 import org.example.parser.VacancySourceParser;
+import org.example.repository.AlertRepository;
 import org.example.repository.FetchHistoryRepository;
+import org.example.repository.JdbcAlertRepository;
 import org.example.repository.JdbcFetchHistoryRepository;
 import org.example.repository.JdbcVacancyRepository;
 import org.example.repository.VacancyRepository;
+import org.example.service.AlertService;
 import org.example.service.ExportService;
 import org.example.service.VacancyFetchService;
 import org.example.service.VacancySearchService;
@@ -29,9 +32,15 @@ public class Main {
 
         VacancyRepository vacancyRepository = new JdbcVacancyRepository(connectionFactory);
         FetchHistoryRepository fetchHistoryRepository = new JdbcFetchHistoryRepository(connectionFactory);
+        AlertRepository alertRepository = new JdbcAlertRepository(connectionFactory);
 
         VacancySearchService vacancySearchService = new VacancySearchService(vacancyRepository);
         VacancyStatisticsService vacancyStatisticsService = new VacancyStatisticsService(vacancyRepository);
+
+        AlertService alertService = new AlertService(
+                alertRepository,
+                vacancySearchService
+        );
 
         List<VacancySourceParser> parsers = List.of(
                 new DemoVacancyParser(),
@@ -60,7 +69,8 @@ public class Main {
                 vacancyFetchService,
                 fetchHistoryRepository,
                 vacancyStatisticsService,
-                exportService
+                exportService,
+                alertService
         );
 
         application.run();

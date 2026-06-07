@@ -20,4 +20,12 @@ CREATE TABLE IF NOT EXISTS fetch_history (
     added_count INT NOT NULL,
     status VARCHAR(50) NOT NULL,
     message VARCHAR(1000)
-    );
+);
+
+CREATE TABLE IF NOT EXISTS alerts (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    keyword VARCHAR(255),
+    city VARCHAR(255),
+    min_salary INT,
+    created_at TIMESTAMP NOT NULL
+);
